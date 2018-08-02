@@ -10,3 +10,16 @@ export const imgAlts = [
   "Asias food restaurant with young customers enjoying their dinner.",
   "Modernish but vintage place, where girls chat most often."
 ];
+
+export const putFetch = (url, data) => fetch(
+  url,
+  {
+    method: 'PUT',
+    body: JSON.stringify(data),
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+).then(res => {
+  res.json
+}).catch(err => console.log(err))
