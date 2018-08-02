@@ -47,6 +47,20 @@
   font-size: 11pt;
 }
 
+.restaurants .restaurant-item .restaurant-favorite {
+  display: block;
+  background: #fff;
+  border: 3px solid orange;
+  padding: .5em;
+  margin: 1em 0 0;
+}
+
+.restaurants .restaurant-item .restaurant-favorite:hover {
+  border-color: #eee;
+  cursor: pointer;
+  color: orange;
+}
+
 .restaurants .restaurant-item .restaurant-link-more {
   background-color: orange;
   border: 3px solid #eee;

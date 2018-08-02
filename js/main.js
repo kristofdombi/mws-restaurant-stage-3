@@ -1,5 +1,5 @@
 import DBHelper from './dbhelper.js';
-import { imgAlts } from './utils.js';
+import { imgAlts, putFetch } from './utils.js';
 
 let restaurants, neighborhoods, cuisines;
 var map;
@@ -149,6 +149,9 @@ const fillRestaurantsHTML = (restaurants = self.restaurants) => {
  * Create restaurant HTML.
  */
 const createRestaurantHTML = restaurant => {
+  const currRestaurentID = restaurant.id;
+  const currentURL = `${DBHelper.DATABASE_URL}/${currRestaurentID}`
+
   const li = document.createElement("li");
   li.className = "restaurant-item";
 
@@ -173,6 +176,44 @@ const createRestaurantHTML = restaurant => {
   address.className = "restaurant-address";
   address.innerHTML = restaurant.address;
   li.append(address);
+
+  const favorite = document.createElement("button");
+  favorite.className = "restaurant-favorite";
+  favorite.id = `fav-${restaurant.id}`;
+  favorite.onclick = toggleFavorite;
+
+  if (restaurant.is_favorite === true) {
+    favorite.innerHTML = 'Unfavor';
+  } else {
+    favorite.innerHTML = 'Mark as favorite';
+  }
+
+  li.append(favorite);
+
+  function toggleFavorite() {
+    if (favorite.innerHTML === 'Mark as favorite') {
+      // Send fetch to favor
+      favorite.innerHTML = 'Unfavor';
+      makeFavorite();
+    } else {
+      favorite.innerHTML = 'Mark as favorite';
+      // Send fetch to unfavor
+      unFavorite();
+    }
+  }
+
+  function makeFavorite() {
+    putFetch(currentURL, {
+      'is_favorite': true
+    })
+  }
+
+  function unFavorite() {
+    putFetch(currentURL, {
+      'is_favorite': false
+    })
+  }
+
 
   const more = document.createElement("a");
   more.setAttribute("aria-label", `View details for ${restaurant.name}`);
