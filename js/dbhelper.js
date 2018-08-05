@@ -1,4 +1,4 @@
-import idb from './idb.js';
+import idb from "./idb.js";
 
 /**
  * Common database helper functions.
@@ -6,6 +6,9 @@ import idb from './idb.js';
 
 const IDB_DATABASE = "restaurantDatabase";
 const IDB_OBJECT = "restaurantObject";
+const IDB_REVIEWS_OBJECT = "reviewsObject";
+const IDB_REVIEWS_OBJECT_OFFLINE = "reviewsOfflineObject";
+const PORT = 1337; // Change this to your server port
 
 export default class DBHelper {
   /**
@@ -13,8 +16,11 @@ export default class DBHelper {
    * Change this to restaurants.json file location on your server.
    */
   static get DATABASE_URL() {
-    const port = 1337; // Change this to your server port
-    return `http://localhost:${port}/restaurants`;
+    return `http://localhost:${PORT}/restaurants`;
+  }
+
+  static get DATABASE_URL_REVIEWS() {
+    return `http://localhost:${PORT}/reviews?restaurant_id=`;
   }
 
   /*
@@ -29,23 +35,120 @@ export default class DBHelper {
         keyPath: "id"
       });
       store.createIndex("by-id", "id");
+      const reviewsStore = upgradeDatabase.createObjectStore(
+        IDB_REVIEWS_OBJECT,
+        {
+          keyPath: "id"
+        }
+      );
+      reviewsStore.createIndex("restaurant_id", "restaurant_id");
+      upgradeDatabase.createObjectStore(IDB_REVIEWS_OBJECT_OFFLINE, {
+        keyPath: "updatedAt"
+      });
     });
   }
 
   /*
    * Save data to IDB database
    */
-  static saveToIDB(data) {
+  static saveToIDB(data, storeToSaveInto = IDB_OBJECT) {
     return DBHelper.openIDBConnection().then(db => {
       if (!db) {
         return;
       }
-      const tx = db.transaction(IDB_OBJECT, "readwrite");
-      const store = tx.objectStore(IDB_OBJECT);
-      data.forEach(restaurant => {
-        store.put(restaurant);
+      switch (storeToSaveInto) {
+        case IDB_REVIEWS_OBJECT: {
+          const tx = db.transaction(IDB_REVIEWS_OBJECT, "readwrite");
+          const store = tx.objectStore(IDB_REVIEWS_OBJECT);
+          store.put(data);
+          return tx.complete;
+        }
+
+        case IDB_REVIEWS_OBJECT_OFFLINE: {
+          const tx = db.transaction(IDB_REVIEWS_OBJECT_OFFLINE, "readwrite");
+          const store = tx.objectStore(IDB_REVIEWS_OBJECT_OFFLINE);
+          store.put(data);
+          return tx.complete;
+        }
+
+        default: {
+          const tx = db.transaction(IDB_OBJECT, "readwrite");
+          const store = tx.objectStore(IDB_OBJECT);
+          data.forEach(restaurant => {
+            store.put(restaurant);
+          });
+          return tx.complete;
+        }
+      }
+    });
+  }
+
+  /**
+   * Fetch all reviews
+   */
+  static fetchReviewsFromAPI(id, cb) {
+    const url = `${DBHelper.DATABASE_URL_REVIEWS}${id}`;
+    return fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        for (let key in data) {
+          DBHelper.saveToIDB(data[key], IDB_REVIEWS_OBJECT);
+        }
+        cb(null, data);
+        return data;
+      })
+      .catch(e => cb(e, null));
+  }
+
+  static fetchCachedReviews(id) {
+    return DBHelper.openIDBConnection().then(db => {
+      if (!db) {
+        return;
+      }
+      const tx = db.transaction(IDB_REVIEWS_OBJECT, "readonly");
+      const store = tx.objectStore(IDB_REVIEWS_OBJECT).index("restaurant_id");
+
+      return store.getAll(id);
+    });
+  }
+
+  static fetchReviews(id, cb) {
+    return DBHelper.fetchCachedReviews(id)
+      .then(reviews => {
+        // IF IDB has value
+        if (reviews.length) {
+          cb(null, reviews);
+          return Promise.resolve(reviews);
+        } else {
+          return DBHelper.fetchReviewsFromAPI(id, cb);
+        }
+      })
+      .catch(error => {
+        console.log('alma: ', error);
+        cb(error, null);
       });
-      return tx.complete;
+  }
+
+  static addReview(data, cb) {
+    return fetch(`http://localhost:${port}/reviews`, {
+      body: JSON.stringify(data),
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      },
+      method: "POST"
+    }).then(res => {
+      res.json().then(data => {
+        DBHelper.saveToIDB(data, IDB_REVIEWS_OBJECT);
+        return data;
+      })
+      cb(null);
+    })
+    .catch(err => {
+      data["updatedAt"] = new Date().getTime();
+      data["createdAt"] = new Date().getTime();
+
+      DBHelper.saveToIDB(data, IDB_REVIEWS_OBJECT_OFFLINE);
     });
   }
 
