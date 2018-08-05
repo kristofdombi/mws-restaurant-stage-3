@@ -16,6 +16,7 @@
 @import "./inside-overrides.css";
 @import "./restaurant-container.css";
 @import "./reviews-container.css";
+@import "./add-review-container.css";
 
 * {
 	box-sizing: border-box;
