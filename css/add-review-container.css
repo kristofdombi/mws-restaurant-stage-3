@@ -1,0 +1,41 @@
+.add-review-container {
+  padding: 2em 0;
+}
+
+.add-review-container .add-review-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.add-review-container .add-review-form label {
+  font-size: 1.15em;
+  margin-bottom: 0.5em;
+}
+
+.add-review-container .add-review-form label:not(:first-child) {
+  margin-top: 0.5em;
+}
+
+.add-review-container .add-review-form input,
+.add-review-container .add-review-form select,
+.add-review-container .add-review-form textarea {
+  padding: 0.75em;
+  border: none;
+  border-radius: 4px;
+  background-color: #fff;
+}
+
+.add-review-container .add-review-form button {
+  font-size: 1.15em;
+  margin-top: 1em;
+  background-color: #ff9f2d;
+  padding: 0.75em;
+  border: 3px solid #eee;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.add-review-container .add-review-form button:hover {
+  background-color: #fff;
+  color: #ff9f2d;
+}
