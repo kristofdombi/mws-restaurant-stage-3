@@ -6,8 +6,8 @@ import idb from "./idb.js";
 
 const IDB_DATABASE = "restaurantDatabase";
 const IDB_OBJECT = "restaurantObject";
-const IDB_REVIEWS_OBJECT = "reviewsObject";
-const IDB_REVIEWS_OBJECT_OFFLINE = "reviewsOfflineObject";
+export const IDB_REVIEWS_OBJECT = "reviewsObject";
+export const IDB_REVIEWS_OBJECT_OFFLINE = "reviewsOfflineObject";
 const PORT = 1337; // Change this to your server port
 
 export default class DBHelper {
@@ -60,7 +60,7 @@ export default class DBHelper {
         case IDB_REVIEWS_OBJECT: {
           const tx = db.transaction(IDB_REVIEWS_OBJECT, "readwrite");
           const store = tx.objectStore(IDB_REVIEWS_OBJECT);
-          store.put(data);
+            store.put(data);
           return tx.complete;
         }
 
@@ -130,7 +130,7 @@ export default class DBHelper {
   }
 
   static addReview(data, cb) {
-    return fetch(`http://localhost:${port}/reviews`, {
+    return fetch(`http://localhost:${PORT}/reviews`, {
       body: JSON.stringify(data),
       headers: {
         Accept: "application/json",

@@ -1,5 +1,7 @@
-import DBHelper from "./dbhelper.js";
-import { imgAlts } from "./utils.js";
+import DBHelper, {
+  IDB_REVIEWS_OBJECT_OFFLINE
+} from "./dbhelper.js";
+import { imgAlts, postFetch } from "./utils.js";
 
 let restaurant;
 var map;
@@ -203,3 +205,75 @@ const fillBreadcrumb = (restaurant = self.restaurant) => {
   li.appendChild(a);
   breadcrumb.appendChild(li);
 };
+
+/**
+ * Review submission form
+ */
+
+ const reviewForm = document.querySelector('#add-review-form');
+ reviewForm.addEventListener('submit', e => {
+   e.preventDefault();
+   const rating = reviewForm.querySelector('#rating');
+
+   const reviewObj = {
+     restaurant_id: parseInt(getParameterByName('id')),
+     name: reviewForm.querySelector('#name').value,
+     rating: rating.options[rating.selectedIndex].value,
+     comments: reviewForm.querySelector('#review-comment').value,
+   }
+
+   DBHelper.addReview(reviewObj, (error) => {
+     if (error) {
+       console.log(error);
+     }
+   }).then(data => {
+     const reviewList = document.querySelector('#reviews-list');
+     reviewObj.createdAt = + new Date();
+     reviewObj.updatedAt = + new Date();
+     reviewList.appendChild(createReviewHTML(reviewObj));
+     reviewForm.reset();
+   }).catch(e => console.log(e))
+ })
+
+ window.addEventListener('online', e => {
+   e.preventDefault();
+   DBHelper.openIDBConnection().then(async db => {
+     if (!db) {
+       return;
+     }
+     const tx = db.transaction(IDB_REVIEWS_OBJECT_OFFLINE, "readwrite");
+     const store = tx.objectStore(IDB_REVIEWS_OBJECT_OFFLINE);
+
+     const req = await store.openCursor();
+
+     const onSuccess = function(event) {
+       const cursor = this.result;
+       if (cursor) {
+         const newReviewObj = {
+           restaurant_id: parseInt(cursor.value.restaurant_id),
+           name: cursor.value.name,
+           rating: cursor.value.rating,
+           comments: cursor.value.comments,
+         }
+
+         // POST cursor value
+        postFetch(`http://localhost:1337/reviews/${cursor.value.restaurant_id}`, newReviewObj);
+
+         // PUT into the other objectStore
+         DBHelper.saveToIDB(newReviewObj, IDB_REVIEWS_OBJECT);
+
+         // DELETE item from idb
+         store.delete(cursor.key);
+
+         cursor.continue();
+       } else {
+         console.log(`No entries in: ${IDB_REVIEWS_OBJECT_OFFLINE}`);
+       }
+     }
+
+     // if (req) {
+       req._request.onsuccess = onSuccess;
+       req._request.onsuccess()
+     // }
+   })
+ });
