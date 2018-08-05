@@ -172,7 +172,7 @@ const createReviewHTML = review => {
 
   const date = document.createElement("span");
   date.className = "review-item-date";
-  date.innerHTML = review.date;
+  date.innerHTML = window.moment(new Date(1504095567183)).format("MM-DD-YYYY");
   info.appendChild(date);
 
   li.appendChild(info);
