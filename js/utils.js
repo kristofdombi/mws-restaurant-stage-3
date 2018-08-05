@@ -23,3 +23,14 @@ export const putFetch = (url, data) => fetch(
 ).then(res => {
   res.json
 }).catch(err => console.log(err))
+
+export const postFetch = (url, data) => fetch(
+  url,
+  {
+    method: 'POST',
+    body: JSON.stringify(data),
+    headers: {
+      'content-type': 'application/json'
+    }
+  }
+).then(res => res.json).catch(err => console.log(err))
