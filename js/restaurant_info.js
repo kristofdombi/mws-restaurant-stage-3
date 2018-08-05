@@ -91,8 +91,8 @@ const fillRestaurantHTML = (restaurant = self.restaurant) => {
   if (restaurant.operating_hours) {
     fillRestaurantHoursHTML();
   }
-  // fill reviews
-  fillReviewsHTML();
+
+  fetchReviews();
 };
 
 /**
@@ -115,6 +115,24 @@ const fillRestaurantHoursHTML = (
 
     hours.appendChild(row);
   }
+};
+
+const fetchReviews = () => {
+  const restaurantID = parseInt(getParameterByName("id"));
+
+  if (!restaurantID) {
+    return;
+  }
+
+  DBHelper.fetchReviews(restaurantID, (err, reviews) => {
+    self.reviews = reviews;
+
+    if (err || !reviews) {
+      return;
+    }
+
+    fillReviewsHTML(reviews);
+  });
 };
 
 /**
